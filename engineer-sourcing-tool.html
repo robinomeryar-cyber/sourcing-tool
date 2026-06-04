@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineer Sourcing Tool</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #f0efeb;
+    --text: #1a1a18;
+    --text2: #6b6b66;
+    --text3: #9b9b96;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --blue-bg: #E6F1FB; --blue-border: #B5D4F4; --blue-text: #0C447C;
+    --teal-bg: #E1F5EE; --teal-border: #9FE1CB; --teal-text: #085041; --teal-mid: #1D9E75;
+    --amber-bg: #FAEEDA; --amber-border: #FAC775; --amber-text: #633806; --amber-mid: #BA7517;
+    --red-bg: #FCEBEB; --red-border: #F7C1C1; --red-text: #A32D2D; --red-mid: #E24B4A;
+    --purple-bg: #EEEDFE; --purple-border: #CECBF6; --purple-text: #3C3489;
+    --green-mid: #1D9E75;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #f0efe9; --text2: #a0a09a; --text3: #6b6b66;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+      --blue-bg:#042C53;--blue-border:#185FA5;--blue-text:#B5D4F4;
+      --teal-bg:#04342C;--teal-border:#0F6E56;--teal-text:#9FE1CB;--teal-mid:#5DCAA5;
+      --amber-bg:#412402;--amber-border:#854F0B;--amber-text:#FAC775;--amber-mid:#EF9F27;
+      --red-bg:#501313;--red-border:#A32D2D;--red-text:#F7C1C1;--red-mid:#F09595;
+      --purple-bg:#26215C;--purple-border:#534AB7;--purple-text:#CECBF6;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+  a{color:inherit;text-decoration:none}
+
+  /* Layout */
+  .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+  .sidebar{background:var(--bg2);border-right:0.5px solid var(--border);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .main{padding:24px;overflow-y:auto}
+
+  /* Sidebar */
+  .sidebar-header{padding:20px 20px 16px;border-bottom:0.5px solid var(--border)}
+  .logo{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+  .logo-icon{width:28px;height:28px;background:var(--text);border-radius:6px;display:flex;align-items:center;justify-content:center}
+  .logo-icon svg{width:16px;height:16px;fill:var(--bg)}
+  .nav{padding:12px 10px;flex:1}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.15s;border:none;background:none;width:100%;text-align:left}
+  .nav-item:hover{background:var(--bg3);color:var(--text)}
+  .nav-item.active{background:var(--bg);color:var(--text);font-weight:500;box-shadow:0 0.5px 0 var(--border)}
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.7}
+  .nav-badge{margin-left:auto;background:var(--text);color:var(--bg);font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;min-width:18px;text-align:center}
+  .sidebar-section{padding:10px 20px 6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-top:6px}
+  .sidebar-footer{padding:16px 20px;border-top:0.5px solid var(--border);font-size:11px;color:var(--text3)}
+  .team-input-wrap{padding:10px 10px 0}
+  .team-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);padding:0 10px;margin-bottom:4px}
+
+  /* Tabs */
+  .page{display:none}
+  .page.active{display:block}
+
+  /* Form controls */
+  input,select,textarea{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color 0.15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--text2)}
+  textarea{resize:vertical;min-height:72px;line-height:1.5}
+  button{cursor:pointer;font-family:inherit;font-size:13px;transition:all 0.15s}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px}
+  .btn:hover{background:var(--bg2)}
+  .btn:active{transform:scale(0.98)}
+  .btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .btn-primary:hover{opacity:0.88}
+  .btn-sm{padding:5px 10px;font-size:12px}
+  .btn-icon{width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--text2)}
+  .btn-icon:hover{background:var(--bg2);color:var(--text)}
+
+  /* Search form */
+  .search-form{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+  .form-row{display:flex;gap:8px;margin-bottom:10px}
+  .form-row:last-child{margin-bottom:0}
+  .form-row input,.form-row select{flex:1}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:10px}
+  .form-label{font-size:11px;color:var(--text2);margin-bottom:4px;display:block}
+  .jd-wrap{margin-bottom:10px}
+
+  /* Heading */
+  .page-header{margin-bottom:20px}
+  .page-title{font-size:20px;font-weight:600;color:var(--text)}
+  .page-subtitle{font-size:13px;color:var(--text2);margin-top:2px}
+
+  /* Result controls */
+  .results-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .results-meta{font-size:13px;color:var(--text2)}
+  .sort-pills{display:flex;gap:4px}
+  .sort-pill{font-size:11px;padding:4px 10px;border-radius:999px;border:0.5px solid var(--border);background:transparent;color:var(--text2)}
+  .sort-pill.active{background:var(--bg);color:var(--text);border-color:var(--border2);font-weight:500}
+  .sort-pill:hover:not(.active){background:var(--bg2)}
+
+  /* Cards */
+  .cards{display:flex;flex-direction:column;gap:10px}
+  .dev-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;transition:border-color 0.15s}
+  .dev-card:hover{border-color:var(--border2)}
+  .dev-card.saved{border-color:var(--teal-mid)}
+  .card-top{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:start}
+  .avatar{width:44px;height:44px;border-radius:50%;object-fit:cover}
+  .avatar-fb{width:44px;height:44px;border-radius:50%;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--purple-text)}
+  .dev-name{font-size:15px;font-weight:500;color:var(--text)}
+  .dev-handle{font-size:12px;color:var(--text2);margin-top:1px}
+  .dev-bio{font-size:13px;color:var(--text2);margin-top:5px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:400px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+  .badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;border-radius:999px;border:0.5px solid var(--border);color:var(--text2);background:var(--bg2)}
+  .badge.lang{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue-text)}
+  .badge.loc{background:var(--teal-bg);border-color:var(--teal-border);color:var(--teal-text)}
+  .badge.so{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber-text)}
+  .card-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+  .action-link{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:3px}
+  .action-link:hover{color:var(--text)}
+  .save-btn{font-size:12px;padding:4px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--text2)}
+  .save-btn:hover{background:var(--bg2)}
+  .save-btn.saved{background:var(--teal-bg);border-color:var(--teal-border);color:var(--teal-text)}
+
+  /* SO section */
+  .so-section{margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .so-label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;margin-right:2px}
+
+  /* Score bar */
+  .score-section{margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)}
+  .score-row{display:flex;align-items:center;gap:10px}
+  .score-num{font-size:22px;font-weight:600;min-width:42px;line-height:1}
+  .score-num.high{color:var(--teal-mid)}
+  .score-num.mid{color:var(--amber-mid)}
+  .score-num.low{color:var(--red-mid)}
+  .bar-track{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease}
+  .bar-fill.high{background:var(--teal-mid)}
+  .bar-fill.mid{background:var(--amber-mid)}
+  .bar-fill.low{background:var(--red-mid)}
+  .score-tier{font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .score-tier.high{background:var(--teal-bg);color:var(--teal-text)}
+  .score-tier.mid{background:var(--amber-bg);color:var(--amber-text)}
+  .score-tier.low{background:var(--red-bg);color:var(--red-text)}
+  .score-reasoning{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5;font-style:italic}
+  .score-signals{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+  .signal{font-size:11px;padding:2px 8px;border-radius:999px;border:0.5px solid var(--border);color:var(--text2);background:var(--bg2)}
+  .scoring-spinner{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px;margin-top:8px}
+
+  /* States */
+  .empty-state{text-align:center;padding:64px 20px;color:var(--text2)}
+  .empty-state svg{width:36px;height:36px;opacity:0.35;margin-bottom:12px}
+  .empty-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px}
+  .spinner-wrap{text-align:center;padding:48px;color:var(--text2)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{animation:spin 0.8s linear infinite;display:inline-block}
+
+  /* Stat cards */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+  .stat-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+  .stat-label{font-size:11px;color:var(--text2);margin-bottom:4px}
+  .stat-value{font-size:22px;font-weight:600;color:var(--text)}
+  .stat-sub{font-size:11px;color:var(--text3);margin-top:1px}
+
+  /* Shortlist cards */
+  .sl-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .sl-score-pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:6px}
+  .sl-score-pill.high{background:var(--teal-bg);color:var(--teal-text)}
+  .sl-score-pill.mid{background:var(--amber-bg);color:var(--amber-text)}
+  .sl-score-pill.low{background:var(--red-bg);color:var(--red-text)}
+
+  /* Team member indicator */
+  .saver-badge{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:3px;margin-top:2px}
+
+  /* Settings */
+  .settings-section{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+  .settings-title{font-size:14px;font-weight:500;margin-bottom:14px;color:var(--text)}
+  .settings-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .settings-row:last-child{margin-bottom:0}
+  .settings-row label{font-size:13px;color:var(--text2);min-width:120px}
+  .settings-row input{flex:1}
+  .api-note{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5}
+
+  /* Divider */
+  hr{border:none;border-top:0.5px solid var(--border);margin:16px 0}
+
+  /* Responsive */
+  @media(max-width:768px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:static;height:auto;flex-direction:row;overflow-x:auto}
+    .nav{display:flex;flex-direction:row;padding:8px}
+    .nav-item{white-space:nowrap}
+    .sidebar-header,.sidebar-footer,.sidebar-section,.team-input-wrap,.team-label{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        </div>
+        Engineer Sourcing
+      </div>
+    </div>
+    <div class="team-label" style="padding:14px 20px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3)">Team member</div>
+    <div class="team-input-wrap">
+      <input type="text" id="team-member-input" placeholder="Your name (e.g. Sarah)" style="font-size:12px;padding:6px 10px" oninput="setTeamMember(this.value)">
+    </div>
+    <div class="nav">
+      <div class="sidebar-section">Navigation</div>
+      <button class="nav-item active" onclick="showPage('search',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Search
+      </button>
+      <button class="nav-item" onclick="showPage('shortlist',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Team Shortlist
+        <span class="nav-badge" id="sl-badge" style="display:none"></span>
+      </button>
+      <button class="nav-item" onclick="showPage('saved-searches',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        Saved Searches
+        <span class="nav-badge" id="ss-badge" style="display:none"></span>
+      </button>
+      <button class="nav-item" onclick="showPage('settings',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <div>Engineer Sourcing Tool v2</div>
+      <div style="margin-top:2px">Powered by GitHub + Stack Overflow + Claude AI</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Search page -->
+    <div class="page active" id="page-search">
+      <div class="page-header">
+        <div class="page-title">Search engineers</div>
+        <div class="page-subtitle">Search GitHub public profiles, enriched with Stack Overflow data and AI match scoring</div>
+      </div>
+
+      <div class="search-form">
+        <div class="jd-wrap">
+          <label class="form-label">✦ Job description — paste to enable AI match scoring</label>
+          <textarea id="jd" placeholder="e.g. We're hiring a senior backend engineer with 5+ years in Python, distributed systems, and AWS. Kafka and PostgreSQL experience preferred..."></textarea>
+        </div>
+        <div class="form-row">
+          <input type="text" id="q" placeholder="Keywords: distributed systems, ML, Kubernetes, React..." />
+          <button class="btn btn-primary" onclick="runSearch()" style="white-space:nowrap;flex-shrink:0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Search
+          </button>
+          <button class="btn" onclick="saveCurrentSearch()" title="Save this search" style="flex-shrink:0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label class="form-label">Language</label>
+            <select id="lang">
+              <option value="">Any language</option>
+              <option value="Python">Python</option>
+              <option value="TypeScript">TypeScript</option>
+              <option value="JavaScript">JavaScript</option>
+              <option value="Go">Go</option>
+              <option value="Rust">Rust</option>
+              <option value="Java">Java</option>
+              <option value="Kotlin">Kotlin</option>
+              <option value="Swift">Swift</option>
+              <option value="C++">C++</option>
+              <option value="Scala">Scala</option>
+              <option value="Ruby">Ruby</option>
+              <option value="C#">C#</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Location</label>
+            <input type="text" id="loc" placeholder="e.g. San Francisco" />
+          </div>
+          <div>
+            <label class="form-label">Min repos</label>
+            <select id="repos">
+              <option value="0">Any</option>
+              <option value="5">5+</option>
+              <option value="10">10+</option>
+              <option value="25">25+</option>
+              <option value="50">50+</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Min followers</label>
+            <select id="followers">
+              <option value="0">Any</option>
+              <option value="10">10+</option>
+              <option value="50">50+</option>
+              <option value="100">100+</option>
+              <option value="500">500+</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Results</label>
+            <select id="count">
+              <option value="10">10 results</option>
+              <option value="20" selected>20 results</option>
+              <option value="30">30 results</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="results-section" style="display:none">
+        <div class="results-controls">
+          <span class="results-meta" id="results-count"></span>
+          <div class="sort-pills">
+            <button class="sort-pill" id="sort-score-btn" onclick="setSort('score',this)" style="display:none">AI score</button>
+            <button class="sort-pill active" onclick="setSort('followers',this)">Followers</button>
+            <button class="sort-pill" onclick="setSort('repos',this)">Repos</button>
+            <button class="sort-pill" onclick="setSort('so',this)">SO rep</button>
+          </div>
+        </div>
+        <div class="cards" id="cards"></div>
+      </div>
+      <div id="loading-state" class="spinner-wrap" style="display:none">
+        <div class="spin" style="font-size:24px;opacity:0.4;margin-bottom:10px">⟳</div>
+        <div>Searching GitHub...</div>
+      </div>
+      <div id="empty-state" class="empty-state" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 12px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <div class="empty-title">No results found</div>
+        <div>Try different keywords or loosen the filters</div>
+      </div>
+      <div id="initial-state" class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 12px"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        <div class="empty-title">Ready to search</div>
+        <div>Enter keywords and optional filters above. Add a job description to enable AI match scoring.</div>
+      </div>
+    </div>
+
+    <!-- Shortlist page -->
+    <div class="page" id="page-shortlist">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="page-title">Team shortlist</div>
+          <div class="page-subtitle">Candidates saved by your team — persists across sessions</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="exportCSV()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+          <button class="btn btn-sm" onclick="clearShortlist()" style="color:var(--red-text)">Clear all</button>
+        </div>
+      </div>
+      <div class="stat-grid" id="sl-stats"></div>
+      <div id="sl-cards-wrap"></div>
+      <div id="sl-empty" class="empty-state" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 12px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="empty-title">No candidates saved yet</div>
+        <div>Search for engineers and save profiles to build the team shortlist</div>
+      </div>
+    </div>
+
+    <!-- Saved Searches page -->
+    <div class="page" id="page-saved-searches">
+      <div class="page-header">
+        <div class="page-title">Saved searches</div>
+        <div class="page-subtitle">Rerun your frequently used search configurations</div>
+      </div>
+      <div id="saved-searches-list"></div>
+      <div id="ss-empty" class="empty-state" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 12px"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <div class="empty-title">No saved searches</div>
+        <div>Use the bookmark icon in the search bar to save a search configuration</div>
+      </div>
+    </div>
+
+    <!-- Settings page -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div class="page-title">Settings</div>
+        <div class="page-subtitle">Configure your API keys and team preferences</div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">Anthropic API key</div>
+        <div class="settings-row">
+          <label>API key</label>
+          <input type="password" id="s-anthropic-key" placeholder="sk-ant-..." oninput="saveSetting('anthropicKey',this.value)">
+        </div>
+        <div class="api-note">Required for AI match scoring. Get your key at console.anthropic.com. Stored only in your browser's localStorage — never sent anywhere except the Anthropic API.</div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">GitHub personal access token (optional)</div>
+        <div class="settings-row">
+          <label>Token</label>
+          <input type="password" id="s-github-token" placeholder="ghp_..." oninput="saveSetting('githubToken',this.value)">
+        </div>
+        <div class="api-note">Optional but recommended — increases rate limit from 10 to 30 searches/min. Create a token at github.com/settings/tokens (no scopes needed for public data).</div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">Team & data</div>
+        <div class="settings-row">
+          <label>Your name</label>
+          <input type="text" id="s-member-name" placeholder="e.g. Sarah" oninput="setTeamMember(this.value);document.getElementById('team-member-input').value=this.value">
+        </div>
+        <div class="api-note" style="margin-top:10px">All shortlist data is stored in your browser's localStorage. To share with teammates, use the Export CSV button or share the raw localStorage data manually. For a true shared backend, host this file with a backend API.</div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="exportData()">Export all data</button>
+          <button class="btn btn-sm" onclick="document.getElementById('import-file').click()">Import data</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let allResults = [];
+let shortlist = [];
+let savedSearches = [];
+let scores = {};
+let soData = {};
+let scoringInProgress = {};
+let sortKey = 'followers';
+let teamMember = '';
+let settings = { anthropicKey: '', githubToken: '' };
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  shortlist = JSON.parse(localStorage.getItem('sourcing-shortlist') || '[]');
+  savedSearches = JSON.parse(localStorage.getItem('sourcing-searches') || '[]');
+  settings = JSON.parse(localStorage.getItem('sourcing-settings') || '{}');
+  teamMember = localStorage.getItem('sourcing-member') || '';
+
+  if (settings.anthropicKey) document.getElementById('s-anthropic-key').value = settings.anthropicKey;
+  if (settings.githubToken) document.getElementById('s-github-token').value = settings.githubToken;
+  if (teamMember) {
+    document.getElementById('team-member-input').value = teamMember;
+    document.getElementById('s-member-name').value = teamMember;
+  }
+
+  updateBadges();
+  renderSavedSearches();
+  document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+}
+
+function setTeamMember(val) {
+  teamMember = val.trim();
+  localStorage.setItem('sourcing-member', teamMember);
+}
+
+function saveSetting(key, val) {
+  settings[key] = val;
+  localStorage.setItem('sourcing-settings', JSON.stringify(settings));
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'shortlist') renderShortlist();
+  if (id === 'saved-searches') renderSavedSearches();
+}
+
+// ─── GitHub Search ────────────────────────────────────────────────────────────
+async function runSearch() {
+  const q = document.getElementById('q').value.trim();
+  const lang = document.getElementById('lang').value;
+  const loc = document.getElementById('loc').value.trim();
+  const minRepos = parseInt(document.getElementById('repos').value) || 0;
+  const minFollowers = parseInt(document.getElementById('followers').value) || 0;
+  const count = parseInt(document.getElementById('count').value) || 20;
+  const jd = document.getElementById('jd').value.trim();
+
+  let parts = [];
+  if (q) parts.push(q);
+  if (loc) parts.push('location:' + loc);
+  if (lang) parts.push('language:' + lang);
+  if (minRepos > 0) parts.push('repos:>=' + minRepos);
+  if (minFollowers > 0) parts.push('followers:>=' + minFollowers);
+  if (!parts.length) parts.push('type:user');
+
+  scores = {}; soData = {}; scoringInProgress = {};
+  show('loading-state'); hide('results-section'); hide('empty-state'); hide('initial-state');
+
+  const headers = { Accept: 'application/vnd.github+json' };
+  if (settings.githubToken) headers['Authorization'] = 'token ' + settings.githubToken;
+
+  try {
+    const res = await fetch(`https://api.github.com/search/users?q=${encodeURIComponent(parts.join('+'))}&per_page=${count}&sort=followers&order=desc`, { headers });
+    const data = await res.json();
+    if (!data.items || !data.items.length) { show('empty-state'); return; }
+
+    const profiles = await Promise.all(
+      data.items.slice(0, count).map(u =>
+        fetch(`https://api.github.com/users/${u.login}`, { headers }).then(r => r.json()).catch(() => u)
+      )
+    );
+    allResults = profiles;
+    hide('loading-state');
+    show('results-section');
+    renderResults();
+
+    // Enrich with SO in background
+    await Promise.all(profiles.map(u => enrichSO(u.login)));
+    renderResults();
+
+    // Score with AI if JD present
+    if (jd && settings.anthropicKey) {
+      document.getElementById('sort-score-btn').style.display = '';
+      await Promise.all(profiles.map(u => scoreCandidate(u, jd)));
+      setSort('score', document.getElementById('sort-score-btn'));
+    } else if (jd && !settings.anthropicKey) {
+      document.getElementById('results-count').textContent += ' · Add Anthropic API key in Settings to enable AI scoring';
+    }
+
+  } catch (e) {
+    hide('loading-state');
+    document.getElementById('empty-state').innerHTML = `<div class="empty-title">GitHub API error</div><div>${e.message || 'Rate limit hit — wait a moment or add a GitHub token in Settings'}</div>`;
+    show('empty-state');
+  }
+}
+
+// ─── Stack Overflow Enrichment ────────────────────────────────────────────────
+async function enrichSO(login) {
+  try {
+    const r = await fetch(`https://api.stackexchange.com/2.3/users?inname=${encodeURIComponent(login)}&site=stackoverflow&filter=default&pagesize=5`);
+    const d = await r.json();
+    if (d.items && d.items.length) {
+      const exact = d.items.find(u => u.display_name.toLowerCase() === login.toLowerCase());
+      const match = exact || d.items[0];
+      soData[login] = { rep: match.reputation, answers: match.answer_count || 0, questions: match.question_count || 0, badges: match.badge_counts, link: match.link };
+    }
+  } catch (e) {}
+  rerenderCard(login);
+}
+
+// ─── AI Scoring ───────────────────────────────────────────────────────────────
+async function scoreCandidate(user, jd) {
+  if (!settings.anthropicKey) return;
+  scoringInProgress[user.login] = true;
+  rerenderCard(user.login);
+  const so = soData[user.login];
+  const profile = `Name: ${user.name || user.login}\nBio: ${user.bio || 'N/A'}\nLocation: ${user.location || 'N/A'}\nCompany: ${user.company || 'N/A'}\nPublic repos: ${user.public_repos || 0}\nFollowers: ${user.followers || 0}\nBlog: ${user.blog || 'N/A'}\nSO reputation: ${so ? so.rep : 'unknown'}\nSO answers: ${so ? so.answers : 'unknown'}`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': settings.anthropicKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 300,
+        system: 'You are a technical recruiting assistant. Return ONLY valid JSON (no markdown): {"score":<0-100>,"tier":"strong"|"potential"|"weak","reasoning":"<one sentence>","signals":["<2-3 keywords>"]}',
+        messages: [{ role: 'user', content: `JOB DESCRIPTION:\n${jd}\n\nCANDIDATE:\n${profile}` }]
+      })
+    });
+    const d = await r.json();
+    const txt = (d.content || []).map(c => c.text || '').join('');
+    scores[user.login] = JSON.parse(txt.replace(/```json|```/g, '').trim());
+  } catch (e) { scores[user.login] = { score: 0, tier: 'weak', reasoning: 'Scoring failed.', signals: [] }; }
+  scoringInProgress[user.login] = false;
+  rerenderCard(user.login);
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function setSort(key, el) {
+  sortKey = key;
+  document.querySelectorAll('.sort-pill').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderResults();
+}
+
+function renderResults() {
+  const sorted = [...allResults].sort((a, b) => {
+    if (sortKey === 'score') return ((scores[b.login] || {score:0}).score) - ((scores[a.login] || {score:0}).score);
+    if (sortKey === 'followers') return (b.followers || 0) - (a.followers || 0);
+    if (sortKey === 'repos') return (b.public_repos || 0) - (a.public_repos || 0);
+    if (sortKey === 'so') return ((soData[b.login] || {rep:0}).rep) - ((soData[a.login] || {rep:0}).rep);
+    return 0;
+  });
+  document.getElementById('results-count').textContent = sorted.length + ' developers found';
+  document.getElementById('cards').innerHTML = sorted.map(u => buildCard(u)).join('');
+}
+
+function rerenderCard(login) {
+  const u = allResults.find(x => x.login === login);
+  if (!u) return;
+  const el = document.getElementById('card-' + login);
+  if (el) el.outerHTML = buildCard(u);
+}
+
+function buildCard(u) {
+  const saved = shortlist.some(s => s.login === u.login);
+  const savedBy = (shortlist.find(s => s.login === u.login) || {}).savedBy || '';
+  const initials = (u.name || u.login || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const av = u.avatar_url
+    ? `<img src="${u.avatar_url}" class="avatar" alt="${u.login}" onerror="this.outerHTML='<div class=\\'avatar-fb\\'>${initials}</div>'">`
+    : `<div class="avatar-fb">${initials}</div>`;
+  const bio = (u.bio || '').slice(0, 80) + ((u.bio || '').length > 80 ? '…' : '');
+  const so = soData[u.login];
+  const sc = scores[u.login];
+  const inProgress = scoringInProgress[u.login];
+
+  let soHtml = '';
+  if (so) {
+    soHtml = `<div class="so-section">
+      <span class="so-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><polyline points="7 11 12 6 17 11"/><line x1="12" y1="17" x2="12" y2="6"/></svg> Stack Overflow</span>
+      <span class="badge so">${fmt(so.rep)} rep</span>
+      <span class="badge so">${so.answers} answers</span>
+      ${so.badges ? `<span class="badge so">${so.badges.gold}g ${so.badges.silver}s ${so.badges.bronze}b</span>` : ''}
+      ${so.link ? `<a href="${so.link}" target="_blank" class="action-link" style="margin-left:auto"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : ''}
+    </div>`;
+  }
+
+  let scoreHtml = '';
+  if (inProgress) {
+    scoreHtml = `<div class="scoring-spinner"><span class="spin">⟳</span> Scoring with AI...</div>`;
+  } else if (sc) {
+    const tier = sc.score >= 70 ? 'high' : sc.score >= 40 ? 'mid' : 'low';
+    const label = sc.score >= 70 ? 'Strong match' : sc.score >= 40 ? 'Potential' : 'Weak match';
+    const sigs = (sc.signals || []).map(s => `<span class="signal">${s}</span>`).join('');
+    scoreHtml = `<div class="score-section">
+      <div class="score-row">
+        <span class="score-num ${tier}">${sc.score}</span>
+        <div class="bar-track"><div class="bar-fill ${tier}" style="width:${sc.score}%"></div></div>
+        <span class="score-tier ${tier}">${label}</span>
+      </div>
+      ${sc.reasoning ? `<div class="score-reasoning">${sc.reasoning}</div>` : ''}
+      ${sigs ? `<div class="score-signals">${sigs}</div>` : ''}
+    </div>`;
+  }
+
+  return `<div class="dev-card${saved ? ' saved' : ''}" id="card-${u.login}">
+    <div class="card-top">
+      ${av}
+      <div>
+        <div class="dev-name">${u.name || u.login}</div>
+        <div class="dev-handle">@${u.login}${u.created_at ? ' · joined ' + new Date(u.created_at).getFullYear() : ''}</div>
+        ${bio ? `<div class="dev-bio">${bio}</div>` : ''}
+        <div class="meta-row">
+          ${u.location ? `<span class="badge loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${u.location}</span>` : ''}
+          ${u.company ? `<span class="badge">${u.company.replace('@', '')}</span>` : ''}
+          <span class="badge">${u.public_repos || 0} repos</span>
+          <span class="badge">${fmt(u.followers || 0)} followers</span>
+          ${u.blog ? `<span class="badge">has website</span>` : ''}
+        </div>
+      </div>
+      <div class="card-actions">
+        <a href="https://github.com/${u.login}" target="_blank" class="action-link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          GitHub
+        </a>
+        <button class="save-btn${saved ? ' saved' : ''}" onclick="toggleSave('${u.login}')">
+          ${saved ? '✓ Saved' : '+ Save'}
+        </button>
+        ${saved && savedBy ? `<div class="saver-badge">by ${savedBy}</div>` : ''}
+      </div>
+    </div>
+    ${soHtml}
+    ${scoreHtml}
+  </div>`;
+}
+
+// ─── Shortlist ─────────────────────────────────────────────────────────────────
+function toggleSave(login) {
+  const u = allResults.find(x => x.login === login);
+  if (!u) return;
+  const idx = shortlist.findIndex(s => s.login === login);
+  if (idx >= 0) {
+    shortlist.splice(idx, 1);
+  } else {
+    shortlist.push({ ...u, savedBy: teamMember, savedAt: new Date().toISOString(), score: scores[login] || null, soRep: soData[login] ? soData[login].rep : null });
+  }
+  localStorage.setItem('sourcing-shortlist', JSON.stringify(shortlist));
+  updateBadges();
+  rerenderCard(login);
+}
+
+function updateBadges() {
+  const n = shortlist.length;
+  const badge = document.getElementById('sl-badge');
+  badge.textContent = n;
+  badge.style.display = n > 0 ? '' : 'none';
+  const ssBadge = document.getElementById('ss-badge');
+  ssBadge.textContent = savedSearches.length;
+  ssBadge.style.display = savedSearches.length > 0 ? '' : 'none';
+}
+
+function renderShortlist() {
+  const wrap = document.getElementById('sl-cards-wrap');
+  const empty = document.getElementById('sl-empty');
+  if (!shortlist.length) { wrap.innerHTML = ''; show('sl-empty'); renderSlStats(); return; }
+  hide('sl-empty');
+  renderSlStats();
+  wrap.innerHTML = shortlist.map(u => {
+    const sc = u.score;
+    const tier = sc ? (sc.score >= 70 ? 'high' : sc.score >= 40 ? 'mid' : 'low') : null;
+    const initials = (u.name || u.login || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const savedDate = u.savedAt ? new Date(u.savedAt).toLocaleDateString() : '';
+    return `<div class="sl-card">
+      ${u.avatar_url ? `<img src="${u.avatar_url}" class="avatar" style="width:40px;height:40px" alt="${u.login}">` : `<div class="avatar-fb" style="width:40px;height:40px;font-size:12px">${initials}</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:500;display:flex;align-items:center;gap:4px">
+          ${u.name || u.login}
+          ${sc && tier ? `<span class="sl-score-pill ${tier}">${sc.score}</span>` : ''}
+        </div>
+        <div style="font-size:12px;color:var(--text2)">@${u.login}${u.location ? ' · ' + u.location : ''}${u.soRep ? ' · SO: ' + fmt(u.soRep) : ''}</div>
+        ${u.savedBy || savedDate ? `<div style="font-size:11px;color:var(--text3);margin-top:1px">${u.savedBy ? 'Saved by ' + u.savedBy : ''}${u.savedBy && savedDate ? ' · ' : ''}${savedDate}</div>` : ''}
+        ${sc && sc.reasoning ? `<div style="font-size:11px;color:var(--text2);margin-top:3px;font-style:italic">${sc.reasoning}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+        <a href="https://github.com/${u.login}" target="_blank" class="action-link">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Profile
+        </a>
+        <button class="btn btn-sm" onclick="removeFromShortlist('${u.login}')" style="color:var(--text3);border-color:var(--border);padding:3px 8px;font-size:11px">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSlStats() {
+  const n = shortlist.length;
+  const scored = shortlist.filter(u => u.score);
+  const avgScore = scored.length ? Math.round(scored.reduce((a, u) => a + u.score.score, 0) / scored.length) : null;
+  const soArr = shortlist.filter(u => u.soRep);
+  const avgSO = soArr.length ? Math.round(soArr.reduce((a, u) => a + u.soRep, 0) / soArr.length) : null;
+  const strong = shortlist.filter(u => u.score && u.score.score >= 70).length;
+  document.getElementById('sl-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total saved</div><div class="stat-value">${n}</div><div class="stat-sub">candidates</div></div>
+    <div class="stat-card"><div class="stat-label">Strong matches</div><div class="stat-value">${strong}</div><div class="stat-sub">score ≥ 70</div></div>
+    <div class="stat-card"><div class="stat-label">Avg AI score</div><div class="stat-value">${avgScore !== null ? avgScore : '—'}</div><div class="stat-sub">${scored.length} scored</div></div>
+    <div class="stat-card"><div class="stat-label">Avg SO rep</div><div class="stat-value">${avgSO !== null ? fmt(avgSO) : '—'}</div><div class="stat-sub">${soArr.length} found</div></div>
+  `;
+}
+
+function removeFromShortlist(login) {
+  shortlist = shortlist.filter(u => u.login !== login);
+  localStorage.setItem('sourcing-shortlist', JSON.stringify(shortlist));
+  updateBadges();
+  renderShortlist();
+}
+
+function clearShortlist() {
+  if (!confirm('Clear the entire team shortlist? This cannot be undone.')) return;
+  shortlist = [];
+  localStorage.setItem('sourcing-shortlist', JSON.stringify(shortlist));
+  updateBadges();
+  renderShortlist();
+}
+
+// ─── Saved Searches ───────────────────────────────────────────────────────────
+function saveCurrentSearch() {
+  const q = document.getElementById('q').value.trim();
+  const lang = document.getElementById('lang').value;
+  const loc = document.getElementById('loc').value.trim();
+  if (!q && !lang && !loc) { alert('Fill in at least one search field before saving.'); return; }
+  const name = prompt('Name this search:', q || lang || loc);
+  if (!name) return;
+  savedSearches.push({ name, q, lang, loc, repos: document.getElementById('repos').value, followers: document.getElementById('followers').value, jd: document.getElementById('jd').value.trim(), savedAt: new Date().toISOString(), savedBy: teamMember });
+  localStorage.setItem('sourcing-searches', JSON.stringify(savedSearches));
+  updateBadges();
+  alert('Search saved!');
+}
+
+function renderSavedSearches() {
+  const el = document.getElementById('saved-searches-list');
+  const empty = document.getElementById('ss-empty');
+  if (!savedSearches.length) { el.innerHTML = ''; show('ss-empty'); return; }
+  hide('ss-empty');
+  el.innerHTML = savedSearches.map((s, i) => `
+    <div class="dev-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:15px;font-weight:500">${s.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">
+            ${[s.q, s.lang, s.loc, s.repos > 0 ? s.repos + '+ repos' : '', s.followers > 0 ? s.followers + '+ followers' : ''].filter(Boolean).join(' · ')}
+          </div>
+          ${s.savedBy ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">Saved by ${s.savedBy} · ${new Date(s.savedAt).toLocaleDateString()}</div>` : ''}
+          ${s.jd ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">Includes job description</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-sm btn-primary" onclick="loadSearch(${i})">Run</button>
+          <button class="btn btn-sm" onclick="deleteSearch(${i})" style="color:var(--text3)">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadSearch(i) {
+  const s = savedSearches[i];
+  document.getElementById('q').value = s.q || '';
+  document.getElementById('lang').value = s.lang || '';
+  document.getElementById('loc').value = s.loc || '';
+  document.getElementById('repos').value = s.repos || '0';
+  document.getElementById('followers').value = s.followers || '0';
+  document.getElementById('jd').value = s.jd || '';
+  showPage('search', document.querySelector('.nav-item'));
+  document.querySelectorAll('.nav-item')[0].classList.add('active');
+  runSearch();
+}
+
+function deleteSearch(i) {
+  savedSearches.splice(i, 1);
+  localStorage.setItem('sourcing-searches', JSON.stringify(savedSearches));
+  updateBadges();
+  renderSavedSearches();
+}
+
+// ─── Export / Import ──────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!shortlist.length) { alert('Shortlist is empty.'); return; }
+  const rows = [['Name', 'Username', 'Location', 'Company', 'Bio', 'Repos', 'Followers', 'SO Rep', 'AI Score', 'AI Tier', 'AI Reasoning', 'GitHub URL', 'SO URL', 'Saved By', 'Saved At']];
+  shortlist.forEach(u => {
+    const sc = u.score || {};
+    rows.push([u.name || '', u.login, u.location || '', (u.company || '').replace('@', ''), (u.bio || '').replace(/"/g, "'"), u.public_repos || 0, u.followers || 0, u.soRep || '', sc.score || '', sc.tier || '', sc.reasoning || '', `https://github.com/${u.login}`, '', u.savedBy || '', u.savedAt ? new Date(u.savedAt).toLocaleDateString() : '']);
+  });
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  dl('sourced-engineers.csv', 'text/csv', csv);
+}
+
+function exportData() {
+  const data = { shortlist, savedSearches, exportedAt: new Date().toISOString() };
+  dl('sourcing-data.json', 'application/json', JSON.stringify(data, null, 2));
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.shortlist) { shortlist = data.shortlist; localStorage.setItem('sourcing-shortlist', JSON.stringify(shortlist)); }
+      if (data.savedSearches) { savedSearches = data.savedSearches; localStorage.setItem('sourcing-searches', JSON.stringify(savedSearches)); }
+      updateBadges();
+      alert('Data imported successfully!');
+    } catch (err) { alert('Invalid file format.'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function dl(name, type, content) {
+  const a = document.createElement('a');
+  a.href = 'data:' + type + ';charset=utf-8,' + encodeURIComponent(content);
+  a.download = name;
+  a.click();
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function show(id) { document.getElementById(id).style.display = ''; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function fmt(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
+
+init();
+</script>
+</body>
+</html>
