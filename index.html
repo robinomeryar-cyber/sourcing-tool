@@ -308,11 +308,11 @@
             </select>
           </div>
           <div>
-            <label class="form-label">Results</label>
+            <label class="form-label">Per page</label>
             <select id="count">
-              <option value="10">10 results</option>
-              <option value="20" selected>20 results</option>
-              <option value="30">30 results</option>
+              <option value="25">25 results</option>
+              <option value="50">50 results</option>
+              <option value="100" selected>100 results</option>
             </select>
           </div>
         </div>
@@ -329,6 +329,7 @@
           </div>
         </div>
         <div class="cards" id="cards"></div>
+        <div id="pagination"></div>
       </div>
       <div id="loading-state" class="spinner-wrap" style="display:none">
         <div class="spin" style="font-size:24px;opacity:0.4;margin-bottom:10px">⟳</div>
@@ -435,6 +436,10 @@ let scoringInProgress = {};
 let sortKey = 'followers';
 let teamMember = '';
 let settings = { anthropicKey: '', githubToken: '' };
+let currentPage = 1;
+let totalCount = 0;
+let lastQuery = '';
+let lastHeaders = {};
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 function init() {
@@ -476,13 +481,13 @@ function showPage(id, el) {
 }
 
 // ─── GitHub Search ────────────────────────────────────────────────────────────
-async function runSearch() {
+async function runSearch(page = 1) {
   const q = document.getElementById('q').value.trim();
   const lang = document.getElementById('lang').value;
   const loc = document.getElementById('loc').value.trim();
   const minRepos = parseInt(document.getElementById('repos').value) || 0;
   const minFollowers = parseInt(document.getElementById('followers').value) || 0;
-  const count = parseInt(document.getElementById('count').value) || 20;
+  const count = parseInt(document.getElementById('count').value) || 100;
   const jd = document.getElementById('jd').value.trim();
 
   let parts = [];
@@ -493,26 +498,43 @@ async function runSearch() {
   if (minFollowers > 0) parts.push('followers:>=' + minFollowers);
   if (!parts.length) parts.push('type:user');
 
-  scores = {}; soData = {}; scoringInProgress = {};
+  const queryStr = parts.join('+');
+  lastQuery = queryStr;
+  currentPage = page;
+
+  if (page === 1) {
+    scores = {}; soData = {}; scoringInProgress = {};
+    allResults = [];
+  }
+
   show('loading-state'); hide('results-section'); hide('empty-state'); hide('initial-state');
 
   const headers = { Accept: 'application/vnd.github+json' };
   if (settings.githubToken) headers['Authorization'] = 'token ' + settings.githubToken;
+  lastHeaders = headers;
 
   try {
-    const res = await fetch(`https://api.github.com/search/users?q=${encodeURIComponent(parts.join('+'))}&per_page=${count}&sort=followers&order=desc`, { headers });
+    const res = await fetch(`https://api.github.com/search/users?q=${encodeURIComponent(queryStr)}&per_page=${count}&page=${page}&sort=followers&order=desc`, { headers });
     const data = await res.json();
+    totalCount = data.total_count || 0;
     if (!data.items || !data.items.length) { show('empty-state'); return; }
 
     const profiles = await Promise.all(
-      data.items.slice(0, count).map(u =>
+      data.items.map(u =>
         fetch(`https://api.github.com/users/${u.login}`, { headers }).then(r => r.json()).catch(() => u)
       )
     );
-    allResults = profiles;
+
+    if (page === 1) {
+      allResults = profiles;
+    } else {
+      allResults = [...allResults, ...profiles];
+    }
+
     hide('loading-state');
     show('results-section');
     renderResults();
+    renderPagination(count);
 
     // Enrich with SO in background
     await Promise.all(profiles.map(u => enrichSO(u.login)));
@@ -532,6 +554,28 @@ async function runSearch() {
     document.getElementById('empty-state').innerHTML = `<div class="empty-title">GitHub API error</div><div>${e.message || 'Rate limit hit — wait a moment or add a GitHub token in Settings'}</div>`;
     show('empty-state');
   }
+}
+
+function renderPagination(perPage) {
+  const maxGitHub = 1000;
+  const available = Math.min(totalCount, maxGitHub);
+  const totalPages = Math.ceil(available / perPage);
+  const el = document.getElementById('pagination');
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+  const showing = allResults.length;
+  let html = `<div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border)">`;
+  html += `<span style="font-size:12px;color:var(--text2);flex:1">Showing ${showing} of ${available.toLocaleString()} results${totalCount > 1000 ? ' (GitHub caps at 1,000)' : ''}</span>`;
+  if (currentPage > 1) {
+    html += `<button class="btn btn-sm" onclick="runSearch(${currentPage - 1})">← Previous</button>`;
+  }
+  html += `<span style="font-size:12px;color:var(--text2)">Page ${currentPage} of ${totalPages}</span>`;
+  if (currentPage < totalPages) {
+    html += `<button class="btn btn-sm btn-primary" onclick="runSearch(${currentPage + 1})">Next ${perPage} →</button>`;
+  }
+  html += `</div>`;
+  el.innerHTML = html;
 }
 
 // ─── Stack Overflow Enrichment ────────────────────────────────────────────────
@@ -589,7 +633,8 @@ function renderResults() {
     if (sortKey === 'so') return ((soData[b.login] || {rep:0}).rep) - ((soData[a.login] || {rep:0}).rep);
     return 0;
   });
-  document.getElementById('results-count').textContent = sorted.length + ' developers found';
+  const total = totalCount > 0 ? ` of ${Math.min(totalCount, 1000).toLocaleString()} total` : '';
+  document.getElementById('results-count').textContent = `${sorted.length} developers shown${total}`;
   document.getElementById('cards').innerHTML = sorted.map(u => buildCard(u)).join('');
 }
 
