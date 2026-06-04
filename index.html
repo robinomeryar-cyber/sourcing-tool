@@ -329,8 +329,24 @@ async function runSearch(page=1){
   try{
     const res=await fetch(`https://api.github.com/search/users?q=${encodeURIComponent(parts.join('+'))}&per_page=${count}&page=${page}&sort=followers&order=desc`,{headers});
     const data=await res.json();
+
+    if(data.message&&data.message.toLowerCase().includes('rate limit')){
+      hide('loading-state');
+      document.getElementById('empty-state').innerHTML=`<div class="empty-title">GitHub rate limit reached</div><div style="margin-top:8px">You've hit GitHub's search limit. Fix: go to <strong>Settings</strong> and add a GitHub personal access token — it increases your limit from 10 to 30 searches/min. Or wait 60 seconds and try again.</div>`;
+      show('empty-state');return;
+    }
+    if(data.message){
+      hide('loading-state');
+      document.getElementById('empty-state').innerHTML=`<div class="empty-title">GitHub API error</div><div style="margin-top:8px">${data.message}</div>`;
+      show('empty-state');return;
+    }
+
     totalCount=data.total_count||0;
-    if(!data.items||!data.items.length){show('empty-state');hide('loading-state');return;}
+    if(!data.items||!data.items.length){
+      hide('loading-state');
+      document.getElementById('empty-state').innerHTML=`<div class="empty-title">No results found</div><div>Try different keywords or loosen the filters</div>`;
+      show('empty-state');return;
+    }
     const profiles=await Promise.all(data.items.map(u=>fetch(`https://api.github.com/users/${u.login}`,{headers}).then(r=>r.json()).catch(()=>u)));
     allResults=page===1?profiles:[...allResults,...profiles];
     hide('loading-state');show('results-section');renderResults();renderPagination(count);
@@ -345,7 +361,7 @@ async function runSearch(page=1){
     }
   }catch(e){
     hide('loading-state');
-    document.getElementById('empty-state').innerHTML=`<div class="empty-title">GitHub API error</div><div>${e.message||'Rate limit hit — wait a moment or add a GitHub token in Settings'}</div>`;
+    document.getElementById('empty-state').innerHTML=`<div class="empty-title">Connection error</div><div style="margin-top:8px">${e.message||'Could not reach GitHub. Check your internet connection and try again.'}</div>`;
     show('empty-state');
   }
 }
