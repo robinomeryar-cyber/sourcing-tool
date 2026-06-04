@@ -182,6 +182,20 @@
   .settings-row input{flex:1}
   .api-note{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5}
 
+  /* Outreach */
+  .outreach-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:12px}
+  .outreach-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .outreach-meta{flex:1}
+  .outreach-name{font-size:15px;font-weight:500;color:var(--text)}
+  .outreach-sub{font-size:12px;color:var(--text2);margin-top:2px}
+  .email-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:10px}
+  .email-field{margin-bottom:10px}
+  .email-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:4px}
+  .email-value{font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:text}
+  .email-value[contenteditable=true]:focus{outline:none;border-color:var(--border2)}
+  .email-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .copied-flash{color:var(--teal-mid);font-size:12px;display:none}
+
   /* Divider */
   hr{border:none;border-top:0.5px solid var(--border);margin:16px 0}
 
@@ -227,6 +241,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
         Saved Searches
         <span class="nav-badge" id="ss-badge" style="display:none"></span>
+      </button>
+      <button class="nav-item" onclick="showPage('outreach',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Outreach
       </button>
       <button class="nav-item" onclick="showPage('settings',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -385,6 +403,42 @@
       </div>
     </div>
 
+    <!-- Outreach page -->
+    <div class="page" id="page-outreach">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="page-title">Outreach emails</div>
+          <div class="page-subtitle">AI-drafted personalized emails for each shortlisted candidate</div>
+        </div>
+      </div>
+      <div class="settings-section" style="margin-bottom:16px">
+        <div class="settings-title">Your outreach context</div>
+        <div class="settings-row">
+          <label>Your name</label>
+          <input type="text" id="o-sender-name" placeholder="e.g. Sarah from Acme" oninput="saveSetting('senderName',this.value)">
+        </div>
+        <div class="settings-row">
+          <label>Company</label>
+          <input type="text" id="o-company" placeholder="e.g. Acme Corp" oninput="saveSetting('company',this.value)">
+        </div>
+        <div class="settings-row">
+          <label>Role you're hiring for</label>
+          <input type="text" id="o-role" placeholder="e.g. Senior Backend Engineer" oninput="saveSetting('role',this.value)">
+        </div>
+        <div class="settings-row" style="align-items:flex-start">
+          <label style="padding-top:8px">What makes this role exciting</label>
+          <textarea id="o-pitch" placeholder="e.g. We're building the next-gen data platform, fully remote, competitive equity..." oninput="saveSetting('pitch',this.value)" style="min-height:56px"></textarea>
+        </div>
+        <div class="api-note">Fill this in once — it personalizes every email. Requires Anthropic API key in Settings.</div>
+      </div>
+      <div id="outreach-list"></div>
+      <div id="outreach-empty" class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 12px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <div class="empty-title">No candidates in shortlist yet</div>
+        <div>Save candidates from the Search tab to generate outreach emails</div>
+      </div>
+    </div>
+
     <!-- Settings page -->
     <div class="page" id="page-settings">
       <div class="page-header">
@@ -450,6 +504,10 @@ function init() {
 
   if (settings.anthropicKey) document.getElementById('s-anthropic-key').value = settings.anthropicKey;
   if (settings.githubToken) document.getElementById('s-github-token').value = settings.githubToken;
+  if (settings.senderName) document.getElementById('o-sender-name').value = settings.senderName;
+  if (settings.company) document.getElementById('o-company').value = settings.company;
+  if (settings.role) document.getElementById('o-role').value = settings.role;
+  if (settings.pitch) document.getElementById('o-pitch').value = settings.pitch;
   if (teamMember) {
     document.getElementById('team-member-input').value = teamMember;
     document.getElementById('s-member-name').value = teamMember;
@@ -478,6 +536,7 @@ function showPage(id, el) {
   if (el) el.classList.add('active');
   if (id === 'shortlist') renderShortlist();
   if (id === 'saved-searches') renderSavedSearches();
+  if (id === 'outreach') renderOutreach();
 }
 
 // ─── GitHub Search ────────────────────────────────────────────────────────────
@@ -903,6 +962,121 @@ function dl(name, type, content) {
   a.href = 'data:' + type + ';charset=utf-8,' + encodeURIComponent(content);
   a.download = name;
   a.click();
+}
+
+// ─── Outreach ─────────────────────────────────────────────────────────────────
+let generatedEmails = {};
+
+function renderOutreach() {
+  const list = document.getElementById('outreach-list');
+  const empty = document.getElementById('outreach-empty');
+  if (!shortlist.length) { list.innerHTML = ''; show('outreach-empty'); return; }
+  hide('outreach-empty');
+  list.innerHTML = shortlist.map(u => {
+    const initials = (u.name || u.login || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const email = generatedEmails[u.login];
+    const sc = u.score;
+    const tier = sc ? (sc.score >= 70 ? 'high' : sc.score >= 40 ? 'mid' : 'low') : null;
+    return `<div class="outreach-card" id="oc-${u.login}">
+      <div class="outreach-header">
+        ${u.avatar_url ? `<img src="${u.avatar_url}" class="avatar" style="width:40px;height:40px" alt="${u.login}">` : `<div class="avatar-fb" style="width:40px;height:40px;font-size:12px">${initials}</div>`}
+        <div class="outreach-meta">
+          <div class="outreach-name">${u.name || u.login} ${sc && tier ? `<span class="sl-score-pill ${tier}" style="font-size:10px">${sc.score}</span>` : ''}</div>
+          <div class="outreach-sub">@${u.login}${u.location ? ' · ' + u.location : ''}${u.company ? ' · ' + u.company.replace('@','') : ''}</div>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="generateEmail('${u.login}')" id="gen-btn-${u.login}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></svg>
+          ${email ? 'Regenerate' : 'Generate email'}
+        </button>
+      </div>
+      ${email ? `
+      <div class="email-box">
+        <div class="email-field">
+          <div class="email-label">Subject</div>
+          <div class="email-value" id="subj-${u.login}" contenteditable="true">${email.subject}</div>
+        </div>
+        <div class="email-field">
+          <div class="email-label">Body</div>
+          <div class="email-value" id="body-${u.login}" contenteditable="true">${email.body}</div>
+        </div>
+        <div class="email-actions">
+          <button class="btn btn-sm" onclick="copyEmail('${u.login}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy email
+          </button>
+          <a class="btn btn-sm" href="mailto:?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.body)}" target="_blank">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Open in email
+          </a>
+          <span class="copied-flash" id="copied-${u.login}">✓ Copied!</span>
+        </div>
+      </div>` : `<div style="font-size:12px;color:var(--text3);margin-top:4px">Click "Generate email" to draft a personalized outreach using this candidate's GitHub and Stack Overflow profile.</div>`}
+    </div>`;
+  }).join('');
+}
+
+async function generateEmail(login) {
+  if (!settings.anthropicKey) { alert('Add your Anthropic API key in Settings to generate emails.'); return; }
+  const u = shortlist.find(x => x.login === login);
+  if (!u) return;
+
+  const btn = document.getElementById('gen-btn-' + login);
+  if (btn) { btn.textContent = '⟳ Writing...'; btn.disabled = true; }
+
+  const senderName = settings.senderName || 'a recruiter';
+  const company = settings.company || 'our company';
+  const role = settings.role || 'an engineering role';
+  const pitch = settings.pitch || '';
+  const sc = u.score;
+
+  const candidateInfo = `
+Name: ${u.name || u.login}
+GitHub: @${u.login}
+Location: ${u.location || 'unknown'}
+Company: ${u.company || 'unknown'}
+Bio: ${u.bio || 'none'}
+Public repos: ${u.public_repos || 0}
+Followers: ${u.followers || 0}
+Stack Overflow reputation: ${u.soRep || 'unknown'}
+AI match signals: ${sc && sc.signals ? sc.signals.join(', ') : 'none'}
+AI match reasoning: ${sc ? sc.reasoning : 'none'}
+  `.trim();
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': settings.anthropicKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 600,
+        system: `You are a friendly, conversational technical recruiter writing personalized outreach emails to software engineers. 
+Write emails that feel genuinely personal — reference specific details from their profile. 
+Never sound templated or spammy. Keep it concise (under 150 words for the body). 
+Don't oversell. Be respectful of their time.
+Return ONLY valid JSON (no markdown): {"subject":"<email subject>","body":"<email body with \\n for line breaks>"}`,
+        messages: [{ role: 'user', content: `Write a friendly outreach email from ${senderName} at ${company} for the role: ${role}.\n\nWhat makes this role exciting: ${pitch || 'great team and interesting technical challenges'}\n\nCandidate profile:\n${candidateInfo}` }]
+      })
+    });
+    const d = await r.json();
+    const txt = (d.content || []).map(c => c.text || '').join('');
+    generatedEmails[login] = JSON.parse(txt.replace(/```json|```/g, '').trim());
+  } catch(e) {
+    generatedEmails[login] = {
+      subject: `Exciting ${role} opportunity at ${company}`,
+      body: `Hi ${u.name || u.login},\n\nI came across your GitHub profile and was really impressed by your work — ${u.public_repos || 0} public repos and your background really stood out to me.\n\nI'm ${senderName} and we're hiring for a ${role} at ${company}. ${pitch ? pitch + '\n\n' : ''}Would love to chat if you're open to it!\n\nBest,\n${senderName}`
+    };
+  }
+  renderOutreach();
+}
+
+function copyEmail(login) {
+  const subj = document.getElementById('subj-' + login);
+  const body = document.getElementById('body-' + login);
+  if (!subj || !body) return;
+  const text = `Subject: ${subj.innerText}\n\n${body.innerText}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const flash = document.getElementById('copied-' + login);
+    if (flash) { flash.style.display = 'inline'; setTimeout(() => flash.style.display = 'none', 2000); }
+  });
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
