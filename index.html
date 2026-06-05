@@ -347,16 +347,43 @@ async function runSearch(page=1){
       document.getElementById('empty-state').innerHTML=`<div class="empty-title">No results found</div><div>Try different keywords or loosen the filters</div>`;
       show('empty-state');return;
     }
-    const profiles=await Promise.all(data.items.map(u=>
-      fetch(`https://api.github.com/users/${u.login}`,{headers})
-        .then(r=>r.json())
-        .then(d=>d.login?d:u)
-        .catch(()=>u)
-    ));
+
+    // Use search results directly — no individual API calls that hit rate limits
+    const profiles = data.items.map(u=>({
+      login: u.login,
+      name: u.login,
+      avatar_url: u.avatar_url,
+      public_repos: 0,
+      followers: 0,
+      bio: '',
+      location: '',
+      company: '',
+      blog: '',
+      created_at: ''
+    }));
+
     allResults=page===1?profiles:[...allResults,...profiles];
     hide('loading-state');show('results-section');renderResults();renderPagination(count);
-    await Promise.all(profiles.map(u=>enrichSO(u.login)));
+
+    // Fetch full profiles in small batches of 5 to avoid rate limits
+    for(let i=0;i<profiles.length;i+=5){
+      const batch=profiles.slice(i,i+5);
+      await Promise.all(batch.map(async u=>{
+        try{
+          const r=await fetch(`https://api.github.com/users/${u.login}`,{headers});
+          const d=await r.json();
+          if(d.login){
+            const idx=allResults.findIndex(x=>x.login===u.login);
+            if(idx>=0)allResults[idx]={...allResults[idx],...d};
+            rerenderCard(u.login);
+          }
+        }catch(e){}
+      }));
+      await new Promise(r=>setTimeout(r,300));
+    }
+
     renderResults();
+    await Promise.all(profiles.map(u=>enrichSO(u.login)));
     if(jd&&settings.anthropicKey){
       document.getElementById('sort-score-btn').style.display='';
       await Promise.all(profiles.map(u=>scoreCandidate(u,jd)));
