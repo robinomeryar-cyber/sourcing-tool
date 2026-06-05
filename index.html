@@ -347,7 +347,12 @@ async function runSearch(page=1){
       document.getElementById('empty-state').innerHTML=`<div class="empty-title">No results found</div><div>Try different keywords or loosen the filters</div>`;
       show('empty-state');return;
     }
-    const profiles=await Promise.all(data.items.map(u=>fetch(`https://api.github.com/users/${u.login}`,{headers}).then(r=>r.json()).catch(()=>u)));
+    const profiles=await Promise.all(data.items.map(u=>
+      fetch(`https://api.github.com/users/${u.login}`,{headers})
+        .then(r=>r.json())
+        .then(d=>d.login?d:u)
+        .catch(()=>u)
+    ));
     allResults=page===1?profiles:[...allResults,...profiles];
     hide('loading-state');show('results-section');renderResults();renderPagination(count);
     await Promise.all(profiles.map(u=>enrichSO(u.login)));
@@ -433,6 +438,7 @@ function rerenderCard(login){
 }
 
 function buildCard(u){
+  if(!u||!u.login)return'';
   const saved=shortlist.some(s=>s.login===u.login);
   const savedBy=(shortlist.find(s=>s.login===u.login)||{}).savedBy||'';
   const initials=(u.name||u.login||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
